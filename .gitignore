@@ -1,0 +1,6 @@
+.idea
+secret-values.yaml
+overrides
+volumes
+.vscode
+*.iml

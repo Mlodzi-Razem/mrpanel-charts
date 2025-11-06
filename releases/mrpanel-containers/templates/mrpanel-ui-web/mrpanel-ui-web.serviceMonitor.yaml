@@ -1,0 +1,25 @@
+{{- if .Values.Environment.enableServiceMonitors -}}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: mrpanel-ui-web
+  namespace: {{ .Release.Namespace }}
+  labels:
+    container: mrpanel-ui-web
+    release: {{ .Values.Environment.serviceMonitors.release }}
+spec:
+  endpoints:
+    - port: http
+      interval: 15s
+      path: /api/metrics
+      scheme: http
+      authorization:
+        type: Bearer
+        credentials:
+          key: {{ .Values.secret.keys.mrpanelUiWeb.metricsToken }}
+          name: {{ include "mrpanel.containers.secret.name" $ }}
+          optional: false
+  selector:
+    matchLabels:
+      container: mrpanel-ui-web
+{{- end -}}

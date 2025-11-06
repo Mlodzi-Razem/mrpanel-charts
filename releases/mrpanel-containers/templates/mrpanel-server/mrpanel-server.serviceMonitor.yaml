@@ -1,0 +1,19 @@
+{{- if .Values.Environment.enableServiceMonitors -}}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: mrpanel-server
+  namespace: {{ .Release.Namespace }}
+  labels:
+    container: mrpanel-server
+    release: {{ .Values.Environment.serviceMonitors.release }}
+spec:
+  endpoints:
+    - port: actuator
+      interval: 15s
+      path: /actuator/prometheus
+      scheme: http
+  selector:
+    matchLabels:
+      container: mrpanel-server
+{{- end -}}

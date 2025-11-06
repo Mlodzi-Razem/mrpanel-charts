@@ -1,0 +1,7 @@
+apiVersion: v2
+name: mrpanel-containers
+version: 0.0.1-SNAPSHOT
+
+annotations:
+  MrPanelServerImage: "ghcr.io/mlodzi-razem/mrpanel-server:v0.0.1-SNAPSHOT9"
+  MrPanelUiWebImage: "ghcr.io/mlodzi-razem/mrpanel-ui-web:v0.0.1-SNAPSHOT9"

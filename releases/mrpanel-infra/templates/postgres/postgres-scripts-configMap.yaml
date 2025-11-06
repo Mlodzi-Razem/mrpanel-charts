@@ -1,0 +1,11 @@
+{{- $Files := .Files -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: {{ .Release.Namespace }}
+  name: {{ include "mrpanel.infra.postgres.scripts.configmap.name" $ }}
+data:
+  {{- range $path, $_ := $Files.Glob "scripts/*.sh" }}
+  {{ base $path | quote -}}: | {{- $Files.Get $path | nindent 4 }}
+  {{ end -}}

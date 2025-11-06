@@ -1,0 +1,3 @@
+# This file is injected into each release, so there is no need for `global`.
+timezone: Europe/Warsaw
+c

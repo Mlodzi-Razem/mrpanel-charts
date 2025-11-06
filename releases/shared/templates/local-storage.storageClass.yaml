@@ -1,0 +1,12 @@
+{{ if .Values.Environment.installLocalStorageClass }}
+# A storage class for local storage on microk8s
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-storage
+provisioner: microk8s.io/hostpath
+reclaimPolicy: Delete
+parameters:
+  pvDir: {{ .Values.Environment.volumes.rootPath }}
+volumeBindingMode: WaitForFirstConsumer
+{{ end }}

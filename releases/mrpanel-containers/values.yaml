@@ -1,0 +1,21 @@
+secret:
+  keys:
+    mrpanelServer:
+      postgresPassword: mrpanel-server.postgres.password
+      postgresUser: mrpanel-server.postgres.user
+      postgresDatabase: mrpanel-server.postgres.database
+    mrpanelUiWeb:
+      googleClientId: mrpanel-ui-web.google.clientId
+      googleClientSecret: mrpanel-ui-web.google.clientSecret
+      nextauthSecret: mrpanel-ui-web.nextauth.secret
+      metricsToken: mrpanel-ui-web.metrics.token
+mrpanelUiWeb:
+  resources:
+    requestsPerReplica:
+      cpu: 0.35
+      memory: 378Mi
+    limitsPerReplica:
+      cpu: 0.5
+      memory: 768Mi
+    maxReplicas: 4
+    averageCpuUtilization: 50

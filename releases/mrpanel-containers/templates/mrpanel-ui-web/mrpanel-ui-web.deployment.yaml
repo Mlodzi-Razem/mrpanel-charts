@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mrpanel-ui-web
+  namespace: {{ .Release.Namespace }}
+  labels:
+    component: mrpanel-ui-web
+spec:
+  selector:
+    matchLabels:
+      container: mrpanel-ui-web
+  template:
+    metadata:
+      name: mrpanel-ui-web
+      namespace: {{ .Release.Namespace }}
+      labels:
+        container: mrpanel-ui-web
+    spec:
+      containers:
+        - name: mrpanel-ui-web
+          image: {{ .Chart.Annotations.MrPanelUiWebImage }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8081
+              name: http
+          readinessProbe:
+            initialDelaySeconds: 30
+            periodSeconds: 60
+            failureThreshold: 10
+            timeoutSeconds: 5
+            exec:
+              command: [ "/bin/sh", "/application/healthcheck.sh" ]
+          env:
+            - name: GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mrpanel.containers.secret.name" $ }}
+                  key: {{ .Values.secret.keys.mrpanelUiWeb.googleClientId }}
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mrpanel.containers.secret.name" $ }}
+                  key: {{ .Values.secret.keys.mrpanelUiWeb.googleClientSecret }}
+            - name: NEXTAUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mrpanel.containers.secret.name" $ }}
+                  key: {{ .Values.secret.keys.mrpanelUiWeb.nextauthSecret }}
+            - name: METRICS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mrpanel.containers.secret.name" $ }}
+                  key: {{ .Values.secret.keys.mrpanelUiWeb.metricsToken }}
+          resources:
+            limits: {{- .Values.mrpanelUiWeb.resources.limitsPerReplica | toYaml | nindent 14 }}
+            requests: {{- .Values.mrpanelUiWeb.resources.requestsPerReplica | toYaml | nindent 14  }}

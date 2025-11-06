@@ -1,0 +1,12 @@
+Environment:
+  useHpa: false
+  enableServiceMonitors: false
+  installLocalStorageClass: false
+  includeGateway: false
+# ----------------------------------
+  storageClass: manual
+  leanLogging: false
+  volumes:
+    rootPath: "/var/lib/mrpanel/volumes"
+  serviceMonitors:
+    release: kube-prom-stack

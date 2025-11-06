@@ -1,0 +1,54 @@
+environments:
+  docker-desktop:
+    values: [ "environments/docker-desktop.yaml" ]
+  microk8s:
+    values: [ "environments/microk8s.yaml" ]
+---
+{{- $envValuesFile := (print "environments/" .Environment.Name ".yaml") -}}
+{{- $valuesList := (list   )  -}}
+
+releases:
+# -------------------------------------------------------------------------
+{{- $allReleases := (dict
+  "shared" (dict
+    "included" true
+  )
+  "mrpanel-infra" (dict
+    "included" true
+  )
+  "mrpanel-containers" (dict
+    "included" true
+  )
+  "mrpanel-gateway" (dict
+    "included" .Environment.Values.Environment.includeGateway
+  )
+) -}}
+
+{{- define "mrpanel.release.values" -}}[
+  {{- $overrideFilePath := (print "overrides/" .name ".yaml") }}
+  "values.yaml",
+  "secrets.yaml.gotmpl",
+  {{ .env | toJson }},
+  {{- if isFile "overrides/environment.yaml" }}
+    "overrides/environment.yaml",
+  {{- end }}
+  {{- if isFile $overrideFilePath }}
+      {{ $overrideFilePath | quote }},
+    {{- end }}
+]{{- end }}
+
+{{- $Env := .Environment }}
+{{ range $release, $params := $allReleases }}
+  {{- if $params.included }}
+- name: {{ $release }}
+  namespace: {{ $release }}
+  createNamespace: true
+  atomic: true
+  cleanupOnFail: true
+  chart: ./releases/{{ $release }}
+  values: {{ include "mrpanel.release.values" (dict
+      "name" $release
+      "env" $Env.Values
+    ) }}
+  {{- end}}
+{{ end }}

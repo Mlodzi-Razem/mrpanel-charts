@@ -1,0 +1,59 @@
+{{- $storageClassName := .Values.Environment.storageClass -}}
+
+{{ define "mrpanel.infra.postgres.volume" }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  namespace: {{ .namespace }}
+  name: {{ .volume }}
+  labels:
+    component: postgres
+    purpose: {{ .purpose }}
+spec:
+  capacity:
+    storage: {{ .storage }}
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .storageClassName }}
+  {{ if eq .storageClassName "manual" }}
+  hostPath:
+    path: {{ (print .rootPath "/" .namespace  "/" .volume) | quote }}
+  {{ end }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: {{ .namespace }}
+  name: {{ .claim }}
+  labels:
+    component: postgres
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .storageClassName }}
+  volumeName: {{ .volume }}
+  resources:
+    requests:
+      storage: {{ .storage }}
+{{ end }}
+
+{{- include "mrpanel.infra.postgres.volume" (dict
+  "namespace" .Release.Namespace
+  "volume" "postgres-data"
+  "purpose" "data"
+  "claim"  (include "mrpanel.infra.postgres.volume.claim.name" "data")
+  "storage" .Values.postgres.volumes.postgresData.storage
+  "storageClassName" $storageClassName
+  "rootPath" .Values.Environment.volumes.rootPath
+) }}
+{{ include "mrpanel.infra.postgres.volume" (dict
+  "namespace" .Release.Namespace
+  "volume" "postgres-backup"
+  "purpose" "backup"
+  "claim" (include "mrpanel.infra.postgres.volume.claim.name" "backup")
+  "storage" .Values.postgres.volumes.postgresBackup.storage
+  "storageClassName" $storageClassName
+  "rootPath" .Values.Environment.volumes.rootPath
+) }}
+

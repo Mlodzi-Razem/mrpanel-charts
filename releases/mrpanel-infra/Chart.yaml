@@ -1,0 +1,7 @@
+apiVersion: v2
+name: mrpanel-infra
+version: 0.0.1-SNAPSHOT
+
+annotations:
+  PostgresImage: "postgres:18.0"
+  PostgresExporterImage: "quay.io/prometheuscommunity/postgres-exporter:v0.18.1"

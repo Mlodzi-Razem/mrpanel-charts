@@ -1,0 +1,12 @@
+cloudflare:
+  issuerName: cloudflare-issuer
+  secretName: cloudflare
+  certApiTokenKey: "api-token"
+certManager:
+  generatedSecretName: "mrpanel-gateway-cert-manager-generated"
+externalServices:
+  mrpanelUiWeb:
+    name: mrpanel-ui-web-external
+    port: 8081
+    externalName: mrpanel-ui-web.mrpanel-containers.svc.cluster.local
+domain: panel.mlodzirazem.org

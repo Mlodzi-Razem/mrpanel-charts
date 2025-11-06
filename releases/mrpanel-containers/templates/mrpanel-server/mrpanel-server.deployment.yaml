@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mrpanel-server
+  namespace: {{ .Release.Namespace }}
+  labels:
+    container: mrpanel-server
+spec:
+  selector:
+    matchLabels:
+      container: mrpanel-server
+  template:
+    metadata:
+      name: mrpanel-server
+      labels:
+        container: mrpanel-server
+      namespace: {{ .Release.Namespace }}
+    spec:
+      containers:
+        - name: mrpanel-server
+          image: {{ .Chart.Annotations.MrPanelServerImage }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+            - containerPort: 9080
+              name: actuator
+          env:
+            - name: DB_HOST
+              value: "postgres.mrpanel-infra.svc.cluster.local"
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mrpanel.containers.secret.name" $ }}
+                  key: {{ .Values.secret.keys.mrpanelServer.postgresDatabase }}
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mrpanel.containers.secret.name" $ }}
+                  key: {{ .Values.secret.keys.mrpanelServer.postgresUser }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mrpanel.containers.secret.name" $ }}
+                  key: {{ .Values.secret.keys.mrpanelServer.postgresPassword }}
+            - name: MAX_MEM
+              value: "3072m"
+            - name: "mrpanel.directory.provider" #TEMPORARY
+              value: mock
+          readinessProbe:
+            initialDelaySeconds: 30
+            periodSeconds: 60
+            failureThreshold: 10
+            timeoutSeconds: 5
+            exec:
+              command: ["/bin/sh", "/application/healthcheck.sh"]
+          resources:
+            requests:
+              memory: 1Gi
+              cpu: 2
+            limits:
+              memory: 3Gi
+              cpu: 3

@@ -1,0 +1,16 @@
+secret:
+  keys:
+    postgres:
+      password: postgres.password
+      user: postgres.user
+      database: postgres.database
+postgres:
+  resources:
+    cpus: 4
+    memoryMegabytes: 4096
+    randomPageCost: 1.1 # We assume that we have an SSD drive
+  volumes:
+    postgresData:
+      storage: 5Gi
+    postgresBackup:
+      storage: 8Gi

@@ -1,0 +1,110 @@
+{{ $PGDATA := "/mnt/data" }}
+{{ $PGINIT_LOG_PATH := (print $PGDATA "/pginit.log")  }}
+{{ $PGREADY_LOG_PATH := (print $PGDATA "/pgready.log")  }}
+{{ $BACKUP_DIR := "/mnt/backup" }}
+{{ $SCRIPTS_DIR := "/mnt/scripts" }}
+
+{{ $logErrorVerbosity := .Values.Environment.leanLogging | ternary "default" "verbose" }}
+{{ $logStatement := .Values.Environment.leanLogging | ternary "mod" "all" }}
+{{ $logMinErrorStatement := .Values.Environment.leanLogging | ternary "warning" "debug" }}
+{{ $logMinMessages := .Values.Environment.leanLogging | ternary "info" "debug" }}
+
+{{ $postgresServiceName := "postgres" }}
+{{ $timezone := .Values.timezone }}
+
+{{ $envFromSecret := (list
+  (list "POSTGRES_PASSWORD" .Values.secret.keys.postgres.password)
+  (list "POSTGRES_DATABASE" .Values.secret.keys.postgres.database)
+  (list "POSTGRES_USER" .Values.secret.keys.postgres.user)
+) -}}
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  namespace: {{ .Release.Namespace }}
+  name: {{ $postgresServiceName }}
+  labels: {{- include "mrpanel.infra.postgres.service.labels" $ | nindent 4 }}
+spec:
+  serviceName: {{ $postgresServiceName }}
+  selector:
+    matchLabels: {{- include "mrpanel.infra.postgres.service.labels" $ | nindent 6 }}
+  replicas: 1
+  template:
+    metadata:
+      namespace: {{ .Release.Namespace }}
+      name:  {{ $postgresServiceName }}
+      labels: {{- include "mrpanel.infra.postgres.service.labels" $ | nindent 8 }}
+    spec:
+      containers:
+        - name: postgres
+          image: {{ .Chart.Annotations.PostgresImage }}
+          ports:
+            - containerPort: 5432
+          resources:
+            limits:
+              cpu: {{ .Values.postgres.resources.cpus }}
+              memory: {{ .Values.postgres.resources.memory }}Mi
+          volumeMounts:
+            - name: data
+              mountPath: {{ $PGDATA | quote }}
+            - name: backup
+              mountPath: {{ $BACKUP_DIR | quote }}
+            - name: scripts
+              mountPath: {{ $SCRIPTS_DIR | quote }}
+          args: [
+            "-c", "random_page_cost={{ .Values.postgres.resources.randomPageCost }}",
+            "-c", "timezone={{ $timezone }}",
+            "-c", "log_timezone={{ $timezone }}",
+            "-c", "wal_level=logical",
+            "-c", "archive_mode=on",
+            "-c", 'archive_command="{{ $SCRIPTS_DIR }}/pgarchive.sh" "%p" "%f"',
+            "-c", "logging_collector=on",
+            "-c", "log_error_verbosity={{ $logErrorVerbosity }}",
+            "-c", "log_min_messages={{ $logMinMessages }}",
+            "-c", "log_statement={{ $logStatement }}",
+            "-c", "log_min_error_statement={{ $logMinErrorStatement }}",
+            "-c", "log_lock_waits=on",
+            "-c", "shared_buffers={{ div .Values.postgres.resources.memoryMegabytes 4 }}MB",
+            "-c", "effective_cache_size={{ ceil (mulf .Values.postgres.resources.memoryMegabytes 0.75) }}MB",
+            "-c", "work_mem={{ max 4 (floor (mulf .Values.postgres.resources.memoryMegabytes 0.001)) }}MB",
+            "-c", "max_connections={{ add1 (ceil (mulf .Values.postgres.resources.cpus 4)) }}"
+          ]
+          lifecycle:
+            postStart:
+              exec:
+                command: [ '/bin/sh', '-c',
+                           'echo "" > {{ $PGINIT_LOG_PATH }} && {{ $SCRIPTS_DIR }}/pginit.sh > {{ $PGINIT_LOG_PATH }} 2>&1']
+          readinessProbe:
+            exec:
+              command: [ "/bin/sh", "-c", "{{ $SCRIPTS_DIR }}/pgready.sh > {{ $PGREADY_LOG_PATH }} 2>&1" ]
+            initialDelaySeconds: 10
+            periodSeconds: 60
+            successThreshold: 1
+            timeoutSeconds: 5
+          env: {{ range $envSec := $envFromSecret }}
+            - name: {{ index $envSec 0 }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mrpanel.infra.secret.name" $ }}
+                  key: {{ index $envSec 1 }}
+            {{- end }}
+            - name: BACKUP_DIR
+              value: {{ $BACKUP_DIR | quote }}
+            - name: SCRIPTS_DIR
+              value: {{ $SCRIPTS_DIR | quote }}
+            - name: PGINIT_LOG_PATH
+              value: {{ $PGINIT_LOG_PATH | quote }}
+            - name: PGDATA
+              value: {{ $PGDATA | quote }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "mrpanel.infra.postgres.volume.claim.name" "data" }}
+        - name: backup
+          persistentVolumeClaim:
+            claimName: {{ include "mrpanel.infra.postgres.volume.claim.name" "backup" }}
+        - name: scripts
+          configMap:
+            name: {{ include "mrpanel.infra.postgres.scripts.configmap.name" $ }}
+            optional: false
+            defaultMode: 0555

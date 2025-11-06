@@ -1,0 +1,26 @@
+{{- if .Values.Environment.useHpa -}}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: mrpanel-ui-web
+  namespace: {{ .Release.Namespace }}
+  labels:
+    container: mrpanel-ui-web
+spec:
+  maxReplicas: {{ .Values.mrpanelUiWeb.resources.maxReplicas }}
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: mrpanel-ui-web
+  minReplicas: 1
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.mrpanelUiWeb.resources.averageCpuUtilization }}
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+{{- end -}}
