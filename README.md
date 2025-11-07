@@ -81,7 +81,7 @@ Make sure that your `kubectl` is configured to use the cluster you want to deplo
 
 For server deployment:
 ```shell
-helmfile -e microk8s sync
+helmfile --helm-binary /snap/bin/microk8s.helm -e microk8s sync
 ```
 
 For local development (does not include HPA and `mrpanel-gateway`):
