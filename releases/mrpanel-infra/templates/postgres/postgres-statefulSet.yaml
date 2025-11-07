@@ -67,13 +67,13 @@ spec:
             "-c", "shared_buffers={{ div .Values.postgres.resources.memoryMegabytes 4 }}MB",
             "-c", "effective_cache_size={{ ceil (mulf .Values.postgres.resources.memoryMegabytes 0.75) }}MB",
             "-c", "work_mem={{ max 4 (floor (mulf .Values.postgres.resources.memoryMegabytes 0.001)) }}MB",
-            "-c", "max_connections={{ add1 (ceil (mulf .Values.postgres.resources.cpus 4)) }}"
+            "-c", "max_connections={{ max 16 (ceil (mulf .Values.postgres.resources.cpus 4)) }}"
           ]
           lifecycle:
             postStart:
               exec:
                 command: [ '/bin/sh', '-c',
-                           'echo "" > {{ $PGINIT_LOG_PATH }} && {{ $SCRIPTS_DIR }}/pginit.sh > {{ $PGINIT_LOG_PATH }} 2>&1']
+                           'sleep 5 && echo "" > {{ $PGINIT_LOG_PATH }} && {{ $SCRIPTS_DIR }}/pginit.sh > {{ $PGINIT_LOG_PATH }} 2>&1']
           readinessProbe:
             exec:
               command: [ "/bin/sh", "-c", "{{ $SCRIPTS_DIR }}/pgready.sh > {{ $PGREADY_LOG_PATH }} 2>&1" ]

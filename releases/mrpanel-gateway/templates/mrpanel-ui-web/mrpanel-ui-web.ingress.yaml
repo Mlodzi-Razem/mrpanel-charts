@@ -19,6 +19,7 @@ metadata:
   name: mrpanel-ui-web-ingress
   namespace: {{ .Release.Namespace }}
 spec:
+  ingressClassName: nginx
   rules:
     - host: {{ .Values.domain }}
       http:
@@ -27,11 +28,10 @@ spec:
             path: /
             backend:
               service:
-                name: {{ .Values.externalServices.mrpanelUiWeb.externalName }}
+                name: {{ .Values.externalServices.mrpanelUiWeb.name }}
                 port:
-                  number: {{ .Values.externalServices.mrpanelUiWeb.port }}
+                  name: http
   tls:
     - hosts:
         - "{{ .Values.domain }}"
-        - "*.{{ .Values.domain }}"
       secretName: {{ .Values.certManager.generatedSecretName }}

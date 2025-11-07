@@ -2,6 +2,7 @@
 
 {{ define "mrpanel.infra.postgres.volume" }}
 ---
+{{- if .createVolumesForClaims}}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -11,16 +12,17 @@ metadata:
     component: postgres
     purpose: {{ .purpose }}
 spec:
+  storageClassName: {{ .storageClassName }}
   capacity:
     storage: {{ .storage }}
   accessModes:
     - ReadWriteOnce
-  storageClassName: {{ .storageClassName }}
-  {{ if eq .storageClassName "manual" }}
+  {{- if eq .storageClass "manual" }}
   hostPath:
     path: {{ (print .rootPath "/" .namespace  "/" .volume) | quote }}
-  {{ end }}
+  {{- end }}
 ---
+{{- end }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -28,11 +30,14 @@ metadata:
   name: {{ .claim }}
   labels:
     component: postgres
+    purpose: {{ .purpose }}
 spec:
   accessModes:
     - ReadWriteOnce
   storageClassName: {{ .storageClassName }}
+  {{- if .createVolumesForClaims}}
   volumeName: {{ .volume }}
+  {{- end }}
   resources:
     requests:
       storage: {{ .storage }}
@@ -46,6 +51,7 @@ spec:
   "storage" .Values.postgres.volumes.postgresData.storage
   "storageClassName" $storageClassName
   "rootPath" .Values.Environment.volumes.rootPath
+  "createVolumesForClaims" .Values.Environment.createVolumesForClaims
 ) }}
 {{ include "mrpanel.infra.postgres.volume" (dict
   "namespace" .Release.Namespace
@@ -55,5 +61,6 @@ spec:
   "storage" .Values.postgres.volumes.postgresBackup.storage
   "storageClassName" $storageClassName
   "rootPath" .Values.Environment.volumes.rootPath
+  "createVolumesForClaims" .Values.Environment.createVolumesForClaims
 ) }}
 

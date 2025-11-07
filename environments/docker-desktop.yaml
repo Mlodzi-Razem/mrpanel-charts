@@ -3,6 +3,7 @@ Environment:
   enableServiceMonitors: false
   installLocalStorageClass: false
   includeGateway: false
+  createVolumesForClaims: true
 # ----------------------------------
   storageClass: manual
   leanLogging: false

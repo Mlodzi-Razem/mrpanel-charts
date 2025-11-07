@@ -1,10 +1,11 @@
 Environment:
   useHpa: true
   enableServiceMonitors: true
-  installLocalStorageClass: true
   includeGateway: true
+  createVolumesForClaims: false
+  installLocalStorageClass: true
   #--------------
-  storageClass: local-storage
+  storageClass: mrpanel-local-storage
   leanLogging: true
   volumes:
     rootPath: "/var/lib/mrpanel/volumes"

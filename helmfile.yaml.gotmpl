@@ -10,9 +10,6 @@ environments:
 releases:
 # -------------------------------------------------------------------------
 {{- $allReleases := (dict
-  "shared" (dict
-    "included" true
-  )
   "mrpanel-infra" (dict
     "included" true
   )
@@ -43,7 +40,6 @@ releases:
 - name: {{ $release }}
   namespace: {{ $release }}
   createNamespace: true
-  atomic: true
   cleanupOnFail: true
   chart: ./releases/{{ $release }}
   values: {{ include "mrpanel.release.values" (dict
@@ -51,4 +47,5 @@ releases:
       "env" $Env.Values
     ) }}
   {{- end}}
+  timeout: 900 # 15 minutes
 {{ end }}

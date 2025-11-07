@@ -1,0 +1,12 @@
+{{- if .Values.Environment.installLocalStorageClass }}
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ .Values.Environment.storageClass }}
+provisioner: microk8s.io/hostpath
+volumeBindingMode: Immediate
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+parameters:
+  pvDir: {{ .Values.Environment.volumes.rootPath }}
+{{- end }}
